@@ -16,6 +16,7 @@ export default withAuth(
                 //allow all auth related routes
                 if(
                     pathname.startsWith("api/auth") ||
+                    pathname.startsWith("/api/imagekit-auth") ||
                     pathname =="/login" ||
                     pathname == "/register"
                 ){

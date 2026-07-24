@@ -1,7 +1,8 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { connectToDatabase } from "./db";
+import { connectToDatabase, hasDatabaseUri } from "./db";
+import { authSecret } from "./env";
 import User from "../models/user";
 
 
@@ -18,9 +19,13 @@ export const authOptions:NextAuthOptions={
                 if(!credentials?.password || !credentials.email){
                     return null
                 }
+                if(!hasDatabaseUri()){
+                    return null
+                }
                 try{
+                    const email = credentials.email.trim().toLowerCase()
                     await connectToDatabase()
-                    const user = await User.findOne({email:credentials.email})
+                    const user = await User.findOne({email})
                     if(!user){
                         throw new Error("No user found")
                     }
@@ -61,5 +66,5 @@ export const authOptions:NextAuthOptions={
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: authSecret,
 } 

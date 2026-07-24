@@ -1,13 +1,19 @@
 import mongoose from "mongoose";
-const MONGODB_URI = process.env.MONGODB_URI!
-if(!MONGODB_URI){
-    throw new Error("Please enter connection URI in the .env file")
-}
+
 let cached = global.mongoose
 if(!cached){
     cached = global.mongoose={conn:null, promise:null}
 }
+
+export function hasDatabaseUri() {
+    return Boolean(process.env.MONGODB_URI)
+}
+
 export async function connectToDatabase(){
+    const MONGODB_URI = process.env.MONGODB_URI
+    if(!MONGODB_URI){
+        throw new Error("Please enter connection URI in the .env file")
+    }
     if(cached.conn){
         return cached.conn
     }

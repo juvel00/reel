@@ -2,3 +2,22 @@
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark;
 }
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+a,
+input,
+textarea {
+  letter-spacing: 0;
+}

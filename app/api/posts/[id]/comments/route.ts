@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase, hasDatabaseUri } from "@/lib/db";
 import { serializePost } from "@/lib/posts";
+import Notification from "@/models/notification";
 import Post from "@/models/post";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
@@ -45,6 +46,17 @@ export async function POST(
     });
 
     await post.save();
+
+    if (post.author?.toString() !== session.user.id) {
+      await Notification.create({
+        recipient: post.author,
+        actor: session.user.id,
+        actorEmail: session.user.email,
+        type: "comment",
+        text: `${session.user.email} commented on your post`,
+        post: post._id,
+      });
+    }
 
     return NextResponse.json({
       post: serializePost(post.toObject(), session.user.id),

@@ -1,6 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import { connectToDatabase, hasDatabaseUri } from "@/lib/db";
 import { serializePost } from "@/lib/posts";
+import Notification from "@/models/notification";
 import Post from "@/models/post";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
@@ -49,6 +50,17 @@ export async function PATCH(
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    const wasActive =
+      action === "like"
+        ? post.likes.some((value: IdValue) => value?.toString() === session.user.id)
+        : action === "dislike"
+          ? post.dislikes.some(
+              (value: IdValue) => value?.toString() === session.user.id
+            )
+          : post.saves.some(
+              (value: IdValue) => value?.toString() === session.user.id
+            );
+
     if (action === "like") {
       post.likes = toggleId(post.likes, session.user.id);
       post.dislikes = post.dislikes.filter(
@@ -68,6 +80,27 @@ export async function PATCH(
     }
 
     await post.save();
+
+    if (
+      !wasActive &&
+      session.user.email &&
+      post.author?.toString() !== session.user.id
+    ) {
+      const labels = {
+        like: "liked your post",
+        dislike: "disliked your post",
+        save: "saved your post",
+      };
+
+      await Notification.create({
+        recipient: post.author,
+        actor: session.user.id,
+        actorEmail: session.user.email,
+        type: action,
+        text: `${session.user.email} ${labels[action]}`,
+        post: post._id,
+      });
+    }
 
     return NextResponse.json({
       post: serializePost(post.toObject(), session.user.id),
